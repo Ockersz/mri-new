@@ -27,6 +27,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
   TextEditingController dateController = TextEditingController();
   TextEditingController locationController = TextEditingController();
   TextEditingController remarksController = TextEditingController();
+  TextEditingController intReqController = TextEditingController();
 
   TextEditingController invTypController = TextEditingController();
   TextEditingController glAccountController = TextEditingController();
@@ -83,6 +84,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
       dateController.clear();
       locationController.clear();
       remarksController.clear();
+      intReqController.clear();
       invTypController.clear();
       glAccountController.clear();
       qtyController.clear();
@@ -415,6 +417,11 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
       }
       if (qtyController.text.isEmpty) {
         await showValidationDialog('Quantity is required');
+        return;
+      }
+
+      if (dimensionController.text.isEmpty) {
+        await showValidationDialog('Dimension is required');
         return;
       }
 
@@ -773,6 +780,23 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
       );
       return;
     }
+
+    if (intReqController.text.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const CustomAlert(
+            title: 'Sorry !',
+            message: 'Internal Requisition is required',
+            icon: Icons.fmd_bad_outlined,
+            iconColor: Colors.red,
+          );
+        },
+      );
+
+      return;
+    }
+
     try {
       //set the date in yyyy-MM-dd format
       String dateFormat = 'yyyy-MM-dd';
@@ -780,8 +804,11 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
       String date = DateFormat(dateFormat).format(dateString);
       int locationId = int.parse(locationController.text ?? '0');
       String remark = remarksController.text;
+      String intReq = intReqController.text;
       String invType = invTypController.text;
-      String creationDate = DateFormat(dateFormat).format(DateTime.now());
+      String creationDate = DateFormat(
+        'yyyy-MM-dd HH:mm:ss',
+      ).format(DateTime.now());
 
       //Fetch all the items
       List<MriItemsDetails> items = await MriItemsRepository().getAllItems();
@@ -817,6 +844,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
         invType,
         items,
         creationDate,
+        intReq,
       );
 
       Navigator.pop(context);
@@ -1049,6 +1077,19 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
                   );
                 },
               ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16.0, 8, 16, 8),
+                child: TextField(
+                  controller: intReqController,
+                  decoration: const InputDecoration(
+                    labelText: 'Internal Requisition',
+                    hintText: 'Enter Internal Requisition',
+                    border: OutlineInputBorder(),
+                  ),
+                  minLines: 1,
+                ),
+              ),
+
               const SizedBox(height: 16),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
