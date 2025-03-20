@@ -7,7 +7,7 @@ import 'package:mri/data/user/user_details.dart';
 import 'package:mri/data/user/user_repository.dart';
 
 class CommonRepository {
-  final String baseURL = 'http://192.168.2.91:5000';
+  final String baseURL = 'https://api.hexagonasia.com';
   static const Duration timeoutDuration = Duration(seconds: 10);
 
   Future checkConnection() async {
@@ -146,6 +146,7 @@ class CommonRepository {
     String invType,
     List items,
     String creationDate,
+    String intReq,
   ) async {
     try {
       UserDetails userDetails = await UserRepository().getUserDetails();
@@ -165,6 +166,7 @@ class CommonRepository {
               'companyId': 3,
               'userId': userDetails.userId,
               'creationDate': creationDate,
+              'intReq': intReq,
             }),
           )
           .timeout(const Duration(seconds: 40));
