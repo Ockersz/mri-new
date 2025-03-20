@@ -3,7 +3,7 @@ import 'package:mri/data/mri_items/mri_items_details.dart';
 
 class MriItemsRepository {
   static const String _boxName = 'mriItemBox';
-  final String baseURL = 'http://192.168.2.91:5000';
+  final String baseURL = 'https://api.hexagonasia.com';
   static const Duration timeoutDuration = Duration(seconds: 10);
 
   // Future<Box> init() async {
