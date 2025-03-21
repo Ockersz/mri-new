@@ -6,7 +6,7 @@ import 'package:mri/data/user/user_details.dart';
 
 class UserRepository {
   static const String _boxName = 'userBox';
-  final String baseURL = 'https://api.hexagonasia.com';
+  final String baseURL = 'http://192.168.1.18:5000';
   static const Duration timeoutDuration = Duration(seconds: 10);
 
   Future<Box> init() async {

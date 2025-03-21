@@ -7,7 +7,7 @@ import 'package:mri/data/user/user_details.dart';
 import 'package:mri/data/user/user_repository.dart';
 
 class CommonRepository {
-  final String baseURL = 'https://api.hexagonasia.com';
+  final String baseURL = 'http://192.168.1.18:5000';
   static const Duration timeoutDuration = Duration(seconds: 10);
 
   Future checkConnection() async {
@@ -78,6 +78,28 @@ class CommonRepository {
         }
       } else {
         return Future.error('Failed to load on hand quantity');
+      }
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  Future<String> getItemDesc(itemId) async {
+    try {
+      String url = '$baseURL/mobile/item/$itemId';
+
+      final response = await http.get(Uri.parse(url)).timeout(timeoutDuration);
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+
+        if (data['item'] != null && data['item'].isNotEmpty) {
+          final Map<String, dynamic> item = data['item'];
+          return item['itmdesc'];
+        } else {
+          return Future.error('Failed to load item description');
+        }
+      } else {
+        return Future.error('Failed to load item description');
       }
     } catch (e) {
       return Future.error(e.toString());

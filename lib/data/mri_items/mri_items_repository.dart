@@ -3,7 +3,7 @@ import 'package:mri/data/mri_items/mri_items_details.dart';
 
 class MriItemsRepository {
   static const String _boxName = 'mriItemBox';
-  final String baseURL = 'https://api.hexagonasia.com';
+  final String baseURL = 'http://192.168.1.18:5000';
   static const Duration timeoutDuration = Duration(seconds: 10);
 
   // Future<Box> init() async {
@@ -18,6 +18,7 @@ class MriItemsRepository {
     String itemRemark,
     int faItemId,
     int dimensionId,
+    String itemDesc,
   ) async {
     await Hive.close();
     final mriItemDetailsBox = await Hive.openBox(_boxName);
@@ -29,6 +30,7 @@ class MriItemsRepository {
       itemRemark: itemRemark,
       faItemId: faItemId,
       dimensionId: dimensionId,
+      itemDesc: itemDesc,
     );
     await mriItemDetailsBox.put(itemId, mriItemDetails);
     await mriItemDetailsBox.close();
@@ -49,6 +51,7 @@ class MriItemsRepository {
     itemRemark,
     faItemId,
     dimensionId,
+    itemDesc,
   ) async {
     await Hive.close();
     final mriItemDetailsBox = await Hive.openBox(_boxName);
@@ -60,6 +63,7 @@ class MriItemsRepository {
       itemRemark: itemRemark,
       faItemId: faItemId,
       dimensionId: dimensionId,
+      itemDesc: itemDesc,
     );
     mriItemDetailsBox.put(itemId, mriItemDetails);
     await Hive.close();

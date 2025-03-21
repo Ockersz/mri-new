@@ -38,6 +38,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
 
   TextEditingController _itemIdController = TextEditingController();
   TextEditingController _itemOnHandQtyController = TextEditingController();
+  TextEditingController _itemDescController = TextEditingController();
 
   List<ConnectivityResult> _connectionStatus = [ConnectivityResult.none];
   final Connectivity _connectivity = Connectivity();
@@ -64,6 +65,11 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
 
     initConnectivity();
 
+    String dateFormat = 'dd/MM/yyyy';
+    DateTime dateString = DateTime.now();
+
+    dateController.text = DateFormat(dateFormat).format(dateString);
+
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
       _updateConnectionStatus,
     );
@@ -81,7 +87,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
   Future<void> refreshAll() async {
     setState(() {
       isSubmit = true;
-      dateController.clear();
+      // dateController.clear();
       locationController.clear();
       remarksController.clear();
       intReqController.clear();
@@ -93,8 +99,11 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
       dimensionController.clear();
       _itemIdController.clear();
       _itemOnHandQtyController.clear();
+      _itemDescController.clear();
       onHandQty = 0;
       isEdit = false;
+
+      dateController.text = DateFormat('dd/MM/yyyy').format(DateTime.now());
     });
 
     await _loadLocations();
@@ -276,9 +285,9 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
         scannedData.toString(),
       );
 
-      // final bool isServiceItem = await commonRepository.getIsServiceItem(
-      //   scannedData.toString(),
-      // );
+      final String itemDesc = await commonRepository.getItemDesc(
+        scannedData.toString(),
+      );
 
       // print(isServiceItem);
 
@@ -287,11 +296,17 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
         return;
       }
 
+      if (itemDesc.isEmpty) {
+        await _showErrorDialog('Item Description not found');
+        return;
+      }
+
       // Update the state with the scanned item details.
       setState(() {
         _itemIdController.text = scannedData.toString();
         _itemOnHandQtyController.text = onhandqty.toString();
         onHandQty = onhandqty;
+        _itemDescController.text = itemDesc;
       });
     } catch (e) {
       print('Error scanning QR Code: $e');
@@ -380,6 +395,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
       dimensionController.clear();
       _itemIdController.clear();
       _itemOnHandQtyController.clear();
+      _itemDescController.clear();
       onHandQty = 0;
       isEdit = false;
     });
@@ -434,6 +450,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
       final String itemRemark = itemRemarksController.text;
       final int faItemId = int.tryParse(faItemController.text) ?? 0;
       final int dimensionId = int.tryParse(dimensionController.text) ?? 0;
+      final String itemDesc = _itemDescController.text;
 
       // Check if the quantity to add is within on-hand quantity
       if (qty > onHandQty) {
@@ -457,6 +474,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
         itemRemark,
         faItemId,
         dimensionId,
+        itemDesc,
       );
 
       // Feedback to user
@@ -521,7 +539,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
                       ),
                       child: ListTile(
                         title: Text(
-                          'Item ID: ${item.itemId}',
+                          '${item.itemId} - ${item.itemDesc}',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Column(
@@ -555,6 +573,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
                                       item.faItemId.toString();
                                   dimensionController.text =
                                       item.dimensionId.toString();
+                                  _itemDescController.text = item.itemDesc;
                                 });
 
                                 Navigator.pop(context);
@@ -664,6 +683,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
       final String itemRemark = itemRemarksController.text;
       final int faItemId = int.tryParse(faItemController.text) ?? 0;
       final int dimensionId = int.tryParse(dimensionController.text) ?? 0;
+      final String itemDesc = _itemDescController.text;
 
       // Check if the quantity to add is within on-hand quantity
       if (qty > onHandQty) {
@@ -680,6 +700,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
         itemRemark,
         faItemId,
         dimensionId,
+        itemDesc,
       );
 
       // Feedback to user
@@ -1231,7 +1252,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
                           children: [
                             Expanded(
                               child: Text(
-                                'Item ID : ${_itemIdController.text}',
+                                'Item : ${_itemIdController.text}',
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -1244,6 +1265,20 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
                                 'On Hand Qty : ${_itemOnHandQtyController.text}',
                                 style: const TextStyle(
                                   fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Description : ${_itemDescController.text}',
+                                style: const TextStyle(
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),

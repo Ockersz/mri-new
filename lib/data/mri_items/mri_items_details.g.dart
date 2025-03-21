@@ -24,13 +24,14 @@ class MriItemsDetailsAdapter extends TypeAdapter<MriItemsDetails> {
       itemRemark: fields[4] as String,
       faItemId: fields[5] as int,
       dimensionId: fields[6] as int,
+      itemDesc: fields[7] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, MriItemsDetails obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.itemId)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class MriItemsDetailsAdapter extends TypeAdapter<MriItemsDetails> {
       ..writeByte(5)
       ..write(obj.faItemId)
       ..writeByte(6)
-      ..write(obj.dimensionId);
+      ..write(obj.dimensionId)
+      ..writeByte(7)
+      ..write(obj.itemDesc);
   }
 
   @override

@@ -25,6 +25,9 @@ class MriItemsDetails {
   @HiveField(6)
   final int dimensionId;
 
+  @HiveField(7)
+  final String itemDesc;
+
   MriItemsDetails(
       {required this.itemId,
       required this.onHandQty,
@@ -32,7 +35,8 @@ class MriItemsDetails {
       required this.qty,
       required this.itemRemark,
       required this.faItemId,
-      required this.dimensionId});
+      required this.dimensionId,
+      required this.itemDesc});
 
   factory MriItemsDetails.fromJson(Map<String, dynamic> json) {
     return MriItemsDetails(
@@ -43,6 +47,7 @@ class MriItemsDetails {
       itemRemark: json['itemRemark'],
       faItemId: json['faItemId'],
       dimensionId: json['dimensionId'],
+      itemDesc: json['itemDesc'],
     );
   }
 
@@ -55,6 +60,7 @@ class MriItemsDetails {
       'itemRemark': itemRemark,
       'faItemId': faItemId,
       'dimensionId': dimensionId,
+      'itemDesc': itemDesc,
     };
   }
 }
