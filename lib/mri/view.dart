@@ -313,6 +313,75 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
     }
   }
 
+  Future<void> searchItem() async {
+    try {
+      // Validation function
+      Future<void> showValidationDialog(String message) async {
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return CustomAlert(
+              title: 'Sorry!',
+              message: message,
+              icon: Icons.fmd_bad_outlined,
+              iconColor: Colors.red,
+            );
+          },
+        );
+      }
+
+      // Check if location is provided and valid.
+      if (locationController.text.isEmpty ||
+          !locations.containsKey(int.parse(locationController.text))) {
+        await showValidationDialog('Location not found');
+        return;
+      }
+
+      // Check for internet connectivity.
+      if (_connectionStatus.contains(ConnectivityResult.none)) {
+        await showValidationDialog('No Internet Connection');
+        return;
+      }
+
+      // Check if item ID is provided.
+      if (_itemIdController.text.isEmpty) {
+        await showValidationDialog('Item ID is required');
+        return;
+      }
+
+      // Get on-hand quantity using the scanned data.
+      final double onhandqty = await commonRepository.getOnHandQty(
+        locationController.text,
+        _itemIdController.text,
+      );
+
+      final String itemDesc = await commonRepository.getItemDesc(
+        _itemIdController.text,
+      );
+
+      // print(isServiceItem);
+
+      if (onhandqty == 0) {
+        await showValidationDialog('Item not found');
+        return;
+      }
+
+      if (itemDesc.isEmpty) {
+        await showValidationDialog('Item Description not found');
+        return;
+      }
+
+      // Update the state with the scanned item details.
+      setState(() {
+        _itemOnHandQtyController.text = onhandqty.toString();
+        onHandQty = onhandqty;
+        _itemDescController.text = itemDesc;
+      });
+    } catch (e) {
+      print('Error searching item: $e');
+    }
+  }
+
   /// Helper function to display an error dialog that remains until dismissed.
   Future<void> _showErrorDialog(String message) async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -1644,6 +1713,116 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
                             },
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        //add a text field and a button to search for an item
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              // For larger screens (tablet), use a fixed width for the text field.
+                              if (constraints.maxWidth > 500) {
+                                return Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      width: 300, // Fixed width for tablets
+                                      child: TextField(
+                                        controller: _itemIdController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Item ID',
+                                          hintText: 'Enter Item ID',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        keyboardType: TextInputType.number,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        searchItem();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            5.0,
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.white,
+                                        side: const BorderSide(
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      child: const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12.0,
+                                          vertical: 6.0,
+                                        ),
+                                        child: Text(
+                                          'Search',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.blue,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              } else {
+                                // For phones: use a percentage of the available width.
+                                return Wrap(
+                                  children: [
+                                    Container(
+                                      width:
+                                          constraints.maxWidth *
+                                          0.5, // 60% of the available width
+                                      child: TextField(
+                                        controller: _itemIdController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Item ID',
+                                          hintText: 'Enter Item ID',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        keyboardType: TextInputType.number,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        searchItem();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            5.0,
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.white,
+                                        side: const BorderSide(
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      child: const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12.0,
+                                          vertical: 6.0,
+                                        ),
+                                        child: Text(
+                                          'Search',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.blue,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }
+                            },
+                          ),
+                        ),
 
                         const SizedBox(height: 32),
                         Row(
@@ -2067,6 +2246,7 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
