@@ -6,7 +6,7 @@ import 'package:mri/data/fa_items/fa_items_details.dart';
 
 class FaItemsRepository {
   static const String _boxName = 'faItemBox';
-  final String baseURL = 'http://192.168.1.18:5000';
+  final String baseURL = 'https://api.hexagonasia.com';
   static const Duration timeoutDuration = Duration(seconds: 10);
 
   Future<Box> init() async {
