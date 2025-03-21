@@ -516,105 +516,344 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
   Future<void> viewItems(BuildContext context) async {
     try {
       List items = await MriItemsRepository().getAllItems();
+      final mediaQuery = MediaQuery.of(context);
+      final isPhone = mediaQuery.size.width < 600; // Adjust threshold as needed
+
       if (items.isNotEmpty) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text(
-                'Items',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 5),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+        if (isPhone) {
+          // For phones: show a modal bottom sheet
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (BuildContext bottomSheetContext) {
+              // Define responsive sizes for phone
+              final bottomSheetHeight = mediaQuery.size.height * 0.8;
+              final titleFontSize = 18.0;
+              final listTitleFontSize = 16.0;
+              final subtitleFontSize = 14.0;
+              final iconSize = 20.0;
+              final buttonTextFontSize = 14.0;
+              return Container(
+                height: bottomSheetHeight,
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    // A drag handle indicator
+                    Container(
+                      width: 50,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2.5),
                       ),
-                      child: ListTile(
-                        title: Text(
-                          '${item.itemId} - ${item.itemDesc}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('On Hand Qty: ${item.onHandQty}'),
-                            Text('Qty: ${item.qty}'),
-                            Text('FA Item ID: ${item.faItemId}'),
-                            Text('Dimension ID: ${item.dimensionId}'),
-                            Text('Remark: ${item.itemRemark}'),
-                          ],
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.blue),
-                              onPressed: () async {
-                                setState(() {
-                                  isEdit = true;
-
-                                  _itemIdController.text =
-                                      item.itemId.toString();
-                                  _itemOnHandQtyController.text =
-                                      item.onHandQty.toString();
-                                  glAccountController.text =
-                                      item.glAccountId.toString();
-                                  qtyController.text = item.qty.toString();
-                                  itemRemarksController.text = item.itemRemark;
-                                  faItemController.text =
-                                      item.faItemId.toString();
-                                  dimensionController.text =
-                                      item.dimensionId.toString();
-                                  _itemDescController.text = item.itemDesc;
-                                });
-
-                                Navigator.pop(context);
-                              },
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Items',
+                      style: TextStyle(
+                        fontSize: titleFontSize,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () async {
-                                await MriItemsRepository().deleteItem(
-                                  item.itemId,
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Item deleted"),
-                                    backgroundColor: Colors.redAccent,
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              title: Text(
+                                '${item.itemId} - ${item.itemDesc}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: listTitleFontSize,
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'On Hand Qty: ${item.onHandQty}',
+                                    style: TextStyle(
+                                      fontSize: subtitleFontSize,
+                                    ),
                                   ),
-                                );
-                                Navigator.pop(context);
-                              },
+                                  Text(
+                                    'Qty: ${item.qty}',
+                                    style: TextStyle(
+                                      fontSize: subtitleFontSize,
+                                    ),
+                                  ),
+                                  Text(
+                                    'FA Item ID: ${item.faItemId}',
+                                    style: TextStyle(
+                                      fontSize: subtitleFontSize,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Dimension ID: ${item.dimensionId}',
+                                    style: TextStyle(
+                                      fontSize: subtitleFontSize,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Remark: ${item.itemRemark}',
+                                    style: TextStyle(
+                                      fontSize: subtitleFontSize,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              trailing: Wrap(
+                                spacing: 8,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.edit,
+                                      color: Colors.blue,
+                                      size: iconSize,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        isEdit = true;
+                                        _itemIdController.text =
+                                            item.itemId.toString();
+                                        _itemOnHandQtyController.text =
+                                            item.onHandQty.toString();
+                                        glAccountController.text =
+                                            item.glAccountId.toString();
+                                        qtyController.text =
+                                            item.qty.toString();
+                                        itemRemarksController.text =
+                                            item.itemRemark;
+                                        faItemController.text =
+                                            item.faItemId.toString();
+                                        dimensionController.text =
+                                            item.dimensionId.toString();
+                                        _itemDescController.text =
+                                            item.itemDesc;
+                                      });
+                                      Navigator.pop(bottomSheetContext);
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                      size: iconSize,
+                                    ),
+                                    onPressed: () async {
+                                      await MriItemsRepository().deleteItem(
+                                        item.itemId,
+                                      );
+                                      ScaffoldMessenger.of(
+                                        bottomSheetContext,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            "Item deleted",
+                                            style: TextStyle(
+                                              fontSize: buttonTextFontSize,
+                                            ),
+                                          ),
+                                          backgroundColor: Colors.redAccent,
+                                        ),
+                                      );
+                                      Navigator.pop(bottomSheetContext);
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
+                          );
+                        },
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pop(bottomSheetContext);
+                        },
+                        child: Text(
+                          'Close',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontSize: buttonTextFontSize,
+                          ),
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    if (mounted) Navigator.pop(context);
-                  },
-                  child: const Text(
-                    'Close',
-                    style: TextStyle(color: Colors.blue),
+              );
+            },
+          );
+        } else {
+          // For tablets: use an AlertDialog
+          showDialog(
+            context: context,
+            builder: (BuildContext dialogContext) {
+              // Define responsive sizes for tablet
+              final titleFontSize = 22.0;
+              final listTitleFontSize = 20.0;
+              final subtitleFontSize = 18.0;
+              final iconSize = 26.0;
+              final buttonTextFontSize = 18.0;
+              return AlertDialog(
+                contentPadding: const EdgeInsets.all(24),
+                title: Text(
+                  'Items',
+                  style: TextStyle(
+                    fontSize: titleFontSize,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ],
-            );
-          },
-        );
+                content: SizedBox(
+                  height: mediaQuery.size.height * 0.6,
+                  width: double.maxFinite,
+                  child: ListView.builder(
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          title: Text(
+                            '${item.itemId} - ${item.itemDesc}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: listTitleFontSize,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'On Hand Qty: ${item.onHandQty}',
+                                style: TextStyle(fontSize: subtitleFontSize),
+                              ),
+                              Text(
+                                'Qty: ${item.qty}',
+                                style: TextStyle(fontSize: subtitleFontSize),
+                              ),
+                              Text(
+                                'FA Item ID: ${item.faItemId}',
+                                style: TextStyle(fontSize: subtitleFontSize),
+                              ),
+                              Text(
+                                'Dimension ID: ${item.dimensionId}',
+                                style: TextStyle(fontSize: subtitleFontSize),
+                              ),
+                              Text(
+                                'Remark: ${item.itemRemark}',
+                                style: TextStyle(fontSize: subtitleFontSize),
+                              ),
+                            ],
+                          ),
+                          trailing: Wrap(
+                            spacing: 8,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  Icons.edit,
+                                  color: Colors.blue,
+                                  size: iconSize,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    isEdit = true;
+                                    _itemIdController.text =
+                                        item.itemId.toString();
+                                    _itemOnHandQtyController.text =
+                                        item.onHandQty.toString();
+                                    glAccountController.text =
+                                        item.glAccountId.toString();
+                                    qtyController.text = item.qty.toString();
+                                    itemRemarksController.text =
+                                        item.itemRemark;
+                                    faItemController.text =
+                                        item.faItemId.toString();
+                                    dimensionController.text =
+                                        item.dimensionId.toString();
+                                    _itemDescController.text = item.itemDesc;
+                                  });
+                                  Navigator.pop(dialogContext);
+                                },
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                  size: iconSize,
+                                ),
+                                onPressed: () async {
+                                  await MriItemsRepository().deleteItem(
+                                    item.itemId,
+                                  );
+                                  ScaffoldMessenger.of(
+                                    dialogContext,
+                                  ).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "Item deleted",
+                                        style: TextStyle(
+                                          fontSize: buttonTextFontSize,
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.redAccent,
+                                    ),
+                                  );
+                                  Navigator.pop(dialogContext);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                actions: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                      },
+                      child: Text(
+                        'Close',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontSize: buttonTextFontSize,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        }
       } else {
         showDialog(
           context: context,
@@ -1113,139 +1352,299 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
 
               const SizedBox(height: 16),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        viewItems(context);
-                      },
-                      icon: const Icon(Icons.view_list_outlined),
-                      label: const Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 4.0,
-                          vertical: 6.0,
-                        ),
-                        child: Text(
-                          'View Items',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5.0),
-                        ),
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.grey),
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        if (isEdit) {
-                          updateItem(context);
-                          return;
-                        }
-                        addItem(context);
-                      },
-                      icon: const Icon(Icons.add),
-                      label: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4.0,
-                          vertical: 6.0,
-                        ),
-                        child:
-                            isEdit
-                                ? const Text(
-                                  'Edit Item',
-                                  style: TextStyle(fontSize: 18),
-                                )
-                                : const Text(
-                                  'Add Row',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5.0),
-                        ),
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.grey),
-                      ),
-                    ),
-                  ],
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Adjust the threshold as needed
+                    if (constraints.maxWidth > 500) {
+                      // With enough space, position the buttons at either end.
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              viewItems(context);
+                            },
+                            icon: const Icon(Icons.view_list_outlined),
+                            label: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 4.0,
+                                vertical: 6.0,
+                              ),
+                              child: Text(
+                                'View Items',
+                                style: TextStyle(fontSize: 18),
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5.0),
+                              ),
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.grey),
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              if (isEdit) {
+                                updateItem(context);
+                                return;
+                              }
+                              addItem(context);
+                            },
+                            icon: const Icon(Icons.add),
+                            label: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4.0,
+                                vertical: 6.0,
+                              ),
+                              child:
+                                  isEdit
+                                      ? const Text(
+                                        'Edit Item',
+                                        style: TextStyle(fontSize: 18),
+                                      )
+                                      : const Text(
+                                        'Add Row',
+                                        style: TextStyle(fontSize: 18),
+                                      ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5.0),
+                              ),
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.grey),
+                            ),
+                          ),
+                        ],
+                      );
+                    } else {
+                      // If space is tight, use Wrap with horizontal and vertical spacing.
+                      return Wrap(
+                        spacing: 16, // horizontal spacing
+                        runSpacing: 8, // vertical spacing when wrapping
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              viewItems(context);
+                            },
+                            icon: const Icon(Icons.view_list_outlined),
+                            label: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 4.0,
+                                vertical: 6.0,
+                              ),
+                              child: Text(
+                                'View Items',
+                                style: TextStyle(fontSize: 18),
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5.0),
+                              ),
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.grey),
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              if (isEdit) {
+                                updateItem(context);
+                                return;
+                              }
+                              addItem(context);
+                            },
+                            icon: const Icon(Icons.add),
+                            label: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4.0,
+                                vertical: 6.0,
+                              ),
+                              child:
+                                  isEdit
+                                      ? const Text(
+                                        'Edit Item',
+                                        style: TextStyle(fontSize: 18),
+                                      )
+                                      : const Text(
+                                        'Add Row',
+                                        style: TextStyle(fontSize: 18),
+                                      ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5.0),
+                              ),
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.grey),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                  },
                 ),
               ),
               const SizedBox(height: 16),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                 child: Container(
-                  height: 650,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color:
-                        Colors.grey[200], // Specify color within BoxDecoration
+                    color: Colors.grey[200],
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(5.0),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
+                      mainAxisSize:
+                          MainAxisSize
+                              .min, // Makes the Column adopt the size of its children
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                _scanQrBarCode();
-                              },
-                              label: const Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12.0,
-                                  vertical: 6.0,
-                                ),
-                                child: Text(
-                                  'Scan Item',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                              ),
-                              icon: const Icon(Icons.qr_code_scanner),
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                                backgroundColor: Colors.white,
-                                side: const BorderSide(color: Colors.grey),
-                              ),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                clearAll();
-                              },
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                                backgroundColor: Colors.white,
-                                side: const BorderSide(color: Colors.grey),
-                              ),
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12.0,
-                                  vertical: 6.0,
-                                ),
-                                child: Text(
-                                  'Clear',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.red,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              // Adjust the threshold (e.g., 500) as needed for your design.
+                              if (constraints.maxWidth > 500) {
+                                // Enough space: position buttons at the far ends.
+                                return Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        _scanQrBarCode();
+                                      },
+                                      icon: const Icon(Icons.qr_code_scanner),
+                                      label: const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12.0,
+                                          vertical: 6.0,
+                                        ),
+                                        child: Text(
+                                          'Scan Item',
+                                          style: TextStyle(fontSize: 18),
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            5.0,
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.white,
+                                        side: const BorderSide(
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        clearAll();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            5.0,
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.white,
+                                        side: const BorderSide(
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      child: const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12.0,
+                                          vertical: 6.0,
+                                        ),
+                                        child: Text(
+                                          'Clear',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.red,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              } else {
+                                // Not enough width: fallback to Wrap with defined spacing.
+                                return Wrap(
+                                  spacing:
+                                      16, // horizontal space between buttons
+                                  runSpacing: 8, // vertical space when wrapping
+                                  children: [
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        _scanQrBarCode();
+                                      },
+                                      icon: const Icon(Icons.qr_code_scanner),
+                                      label: const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12.0,
+                                          vertical: 6.0,
+                                        ),
+                                        child: Text(
+                                          'Scan Item',
+                                          style: TextStyle(fontSize: 18),
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            5.0,
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.white,
+                                        side: const BorderSide(
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        clearAll();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            5.0,
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.white,
+                                        side: const BorderSide(
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      child: const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12.0,
+                                          vertical: 6.0,
+                                        ),
+                                        child: Text(
+                                          'Clear',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.red,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }
+                            },
+                          ),
                         ),
+
                         const SizedBox(height: 32),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1512,63 +1911,156 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
                           },
                         ),
                         const SizedBox(height: 32),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            ElevatedButton.icon(
-                              onPressed:
-                                  isSubmit
-                                      ? null
-                                      : () {
-                                        refreshAll();
-                                      },
-                              label: const Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 4.0,
-                                  vertical: 6.0,
-                                ),
-                                child: Text(
-                                  'Refresh',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                              ),
-                              icon: const Icon(Icons.refresh_outlined),
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                                backgroundColor:
-                                    isSubmit ? Colors.grey : Colors.blue[200],
-                                side: const BorderSide(color: Colors.grey),
-                              ),
-                            ),
-                            ElevatedButton.icon(
-                              onPressed:
-                                  isSubmit
-                                      ? null
-                                      : () {
-                                        saveMri();
-                                      },
-                              label: const Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 4.0,
-                                  vertical: 6.0,
-                                ),
-                                child: Text(
-                                  'Save Changes',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                              ),
-                              icon: const Icon(Icons.save_outlined),
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                                backgroundColor: Colors.green[300],
-                                side: const BorderSide(color: Colors.grey),
-                              ),
-                            ),
-                          ],
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            // Adjust the threshold value (e.g., 500) to match your design needs.
+                            if (constraints.maxWidth > 500) {
+                              // Enough space: use Row with spaceBetween
+                              return Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  ElevatedButton.icon(
+                                    onPressed:
+                                        isSubmit
+                                            ? null
+                                            : () {
+                                              refreshAll();
+                                            },
+                                    icon: const Icon(Icons.refresh_outlined),
+                                    label: const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 4.0,
+                                        vertical: 6.0,
+                                      ),
+                                      child: Text(
+                                        'Refresh',
+                                        style: TextStyle(fontSize: 18),
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          5.0,
+                                        ),
+                                      ),
+                                      backgroundColor:
+                                          isSubmit
+                                              ? Colors.grey
+                                              : Colors.blue[200],
+                                      side: const BorderSide(
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed:
+                                        isSubmit
+                                            ? null
+                                            : () {
+                                              saveMri();
+                                            },
+                                    icon: const Icon(Icons.save_outlined),
+                                    label: const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 4.0,
+                                        vertical: 6.0,
+                                      ),
+                                      child: Text(
+                                        'Save Changes',
+                                        style: TextStyle(fontSize: 18),
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          5.0,
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.green[300],
+                                      side: const BorderSide(
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            } else {
+                              // Not enough space: fallback to Wrap
+                              return Wrap(
+                                spacing:
+                                    16, // horizontal spacing between buttons
+                                runSpacing:
+                                    8, // vertical spacing when wrapping to a new line
+                                alignment: WrapAlignment.center,
+                                children: [
+                                  ElevatedButton.icon(
+                                    onPressed:
+                                        isSubmit
+                                            ? null
+                                            : () {
+                                              refreshAll();
+                                            },
+                                    icon: const Icon(Icons.refresh_outlined),
+                                    label: const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 4.0,
+                                        vertical: 6.0,
+                                      ),
+                                      child: Text(
+                                        'Refresh',
+                                        style: TextStyle(fontSize: 18),
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          5.0,
+                                        ),
+                                      ),
+                                      backgroundColor:
+                                          isSubmit
+                                              ? Colors.grey
+                                              : Colors.blue[200],
+                                      side: const BorderSide(
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed:
+                                        isSubmit
+                                            ? null
+                                            : () {
+                                              saveMri();
+                                            },
+                                    icon: const Icon(Icons.save_outlined),
+                                    label: const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 4.0,
+                                        vertical: 6.0,
+                                      ),
+                                      child: Text(
+                                        'Save Changes',
+                                        style: TextStyle(fontSize: 18),
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          5.0,
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.green[300],
+                                      side: const BorderSide(
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
+                          },
                         ),
                       ],
                     ),
