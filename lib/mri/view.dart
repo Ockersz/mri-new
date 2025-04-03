@@ -1230,10 +1230,14 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
       appBar: AppBar(
         title: const Text('Material Issue Note'),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.settings),
-          onPressed: () {
-            Navigator.pushNamed(context, '/settings');
+        leading: Builder(
+          builder: (BuildContext context) {
+            return IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () {
+                Scaffold.of(context).openDrawer(); // Opens the drawer
+              },
+            );
           },
         ),
         automaticallyImplyLeading: false,
@@ -1247,6 +1251,48 @@ class _MaterialIssueNoteState extends State<MaterialIssueNote> {
           ),
         ],
       ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Text(
+                'Navigation',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/home',
+                ); // Replace with your home route
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.list_alt),
+              title: const Text('GRN'),
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/grn',
+                ); // Replace with your GRN list route
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Settings'),
+              onTap: () {
+                Navigator.pushNamed(context, '/settings');
+              },
+            ),
+          ],
+        ),
+      ),
+
       body: SingleChildScrollView(
         child: SafeArea(
           child: Column(

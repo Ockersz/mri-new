@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mri/custom_alert/custom_alert.dart';
 import 'package:mri/data/fa_items/fa_items_repository.dart';
+import 'package:mri/data/user/user_repository.dart';
 
 class Settings extends StatefulWidget {
   static const routeName = '/settings';
@@ -28,8 +29,9 @@ class _SettingsState extends State<Settings> {
 
     initConnectivity();
 
-    _connectivitySubscription =
-        _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
+      _updateConnectionStatus,
+    );
   }
 
   Future<void> initConnectivity() async {
@@ -142,20 +144,67 @@ class _SettingsState extends State<Settings> {
       appBar: AppBar(
         title: const Text('Settings'),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushNamed(context, '/material_issue_note');
+        leading: Builder(
+          builder: (BuildContext context) {
+            return IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () {
+                Scaffold.of(context).openDrawer(); // Opens the drawer
+              },
+            );
           },
         ),
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () {
-                Navigator.pop(context);
-              }),
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              UserRepository().logout();
+              Navigator.pushNamed(context, '/login');
+            },
+          ),
         ],
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Text(
+                'Navigation',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/home',
+                ); // Replace with your home route
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.list_alt),
+              title: const Text('GRN'),
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/grn',
+                ); // Replace with your GRN list route
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.inventory),
+              title: const Text('MRI'),
+              onTap: () {
+                Navigator.pushNamed(context, '/material-issue-note');
+              },
+            ),
+          ],
+        ),
       ),
       body: Center(
         child: SafeArea(
@@ -163,13 +212,15 @@ class _SettingsState extends State<Settings> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ElevatedButton.icon(
-                  onPressed: () {
-                    isSubmit ? null : _downloadFaItems();
-                  },
-                  label: isSubmit
-                      ? const CircularProgressIndicator()
-                      : const Text('Download FA Items'),
-                  icon: isSubmit ? null : const Icon(Icons.download)),
+                onPressed: () {
+                  isSubmit ? null : _downloadFaItems();
+                },
+                label:
+                    isSubmit
+                        ? const CircularProgressIndicator()
+                        : const Text('Download FA Items'),
+                icon: isSubmit ? null : const Icon(Icons.download),
+              ),
             ],
           ),
         ),

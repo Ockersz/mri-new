@@ -35,42 +35,45 @@ class _LoginPageState extends State<LoginPage> {
       );
     }
 
-    await UserRepository().login(username, password).then((userDetails) {
-      //navigate to home page
-      if (userDetails.userId.isNotEmpty) {
-        Navigator.pushReplacementNamed(context, '/material-issue-note');
-      } else {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return const CustomAlert(
-              title: 'Error WE!',
-              message: 'Invalid username or password',
-              icon: Icons.error,
-              iconColor: Colors.red,
-              titleColor: Colors.black,
-              messageColor: Colors.black54,
-              backgroundColor: Colors.white,
+    await UserRepository()
+        .login(username, password)
+        .then((userDetails) {
+          //navigate to home page
+          if (userDetails.userId.isNotEmpty) {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else {
+            showDialog(
+              context: context,
+              builder: (context) {
+                return const CustomAlert(
+                  title: 'Error WE!',
+                  message: 'Invalid username or password',
+                  icon: Icons.error,
+                  iconColor: Colors.red,
+                  titleColor: Colors.black,
+                  messageColor: Colors.black54,
+                  backgroundColor: Colors.white,
+                );
+              },
             );
-          },
-        );
-      }
-    }).catchError((error) {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return CustomAlert(
-            title: 'Error !',
-            message: error.toString(),
-            icon: Icons.error,
-            iconColor: Colors.red,
-            titleColor: Colors.black,
-            messageColor: Colors.black54,
-            backgroundColor: Colors.white,
+          }
+        })
+        .catchError((error) {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return CustomAlert(
+                title: 'Error !',
+                message: error.toString(),
+                icon: Icons.error,
+                iconColor: Colors.red,
+                titleColor: Colors.black,
+                messageColor: Colors.black54,
+                backgroundColor: Colors.white,
+              );
+            },
           );
-        },
-      );
-    });
+        });
   }
 
   @override
@@ -138,10 +141,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               child: const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32.0, vertical: 12.0),
-                child: Text(
-                  'Login',
-                  style: TextStyle(fontSize: 18),
-                ),
+                child: Text('Login', style: TextStyle(fontSize: 18)),
               ),
             ),
             const SizedBox(height: 25.0),

@@ -7,6 +7,8 @@ import 'package:mri/data/fa_items/fa_items_repository.dart';
 import 'package:mri/data/mri_items/mri_items_details.dart';
 import 'package:mri/data/user/user_details.dart';
 import 'package:mri/data/user/user_repository.dart';
+import 'package:mri/grn/view.dart';
+import 'package:mri/home/view.dart';
 import 'package:mri/login/view.dart';
 import 'package:mri/mri/view.dart';
 import 'package:mri/register/view.dart';
@@ -38,7 +40,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Material Issue Note',
+      title: 'Stores',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.white,
@@ -52,8 +54,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: GoogleFonts.montserrat().fontFamily,
       ),
-      initialRoute:
-          isLoggedIn ? MaterialIssueNote.routeName : LoginPage.routeName,
+      initialRoute: isLoggedIn ? HomePage.routeName : LoginPage.routeName,
       onGenerateRoute: (RouteSettings routeSettings) {
         WidgetBuilder builder;
         switch (routeSettings.name) {
@@ -68,6 +69,12 @@ class MyApp extends StatelessWidget {
             break;
           case Settings.routeName:
             builder = (BuildContext _) => const Settings();
+            break;
+          case GRNScreen.routeName:
+            builder = (BuildContext _) => const GRNScreen();
+            break;
+          case HomePage.routeName:
+            builder = (BuildContext _) => const HomePage();
             break;
           default:
             builder = (BuildContext _) => const MaterialIssueNote();
