@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:mri/data/fa_items/fa_items_details.dart';
 import 'package:mri/data/fa_items/fa_items_repository.dart';
+import 'package:mri/data/grn_items/grn_items_details.dart';
 import 'package:mri/data/mri_items/mri_items_details.dart';
 import 'package:mri/data/user/user_details.dart';
 import 'package:mri/data/user/user_repository.dart';
@@ -21,6 +22,7 @@ void main() async {
   Hive.registerAdapter(UserDetailsAdapter());
   Hive.registerAdapter(FaItemsDetailsAdapter());
   Hive.registerAdapter(MriItemsDetailsAdapter());
+  Hive.registerAdapter(GrnItemsDetailsAdapter());
 
   // Initialize repositories
   await UserRepository().init();
