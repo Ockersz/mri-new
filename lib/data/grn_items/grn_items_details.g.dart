@@ -23,13 +23,14 @@ class GrnItemsDetailsAdapter extends TypeAdapter<GrnItemsDetails> {
       receivedQty: fields[3] as double,
       unit: fields[4] as String,
       glAccountId: fields[5] as int,
+      unitPrice: fields[6] as double,
     );
   }
 
   @override
   void write(BinaryWriter writer, GrnItemsDetails obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.itemId)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class GrnItemsDetailsAdapter extends TypeAdapter<GrnItemsDetails> {
       ..writeByte(4)
       ..write(obj.unit)
       ..writeByte(5)
-      ..write(obj.glAccountId);
+      ..write(obj.glAccountId)
+      ..writeByte(6)
+      ..write(obj.unitPrice);
   }
 
   @override

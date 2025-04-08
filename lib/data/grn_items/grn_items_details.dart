@@ -5,22 +5,25 @@ part 'grn_items_details.g.dart';
 @HiveType(typeId: 3)
 class GrnItemsDetails {
   @HiveField(0)
-  final int itemId;
+  int itemId;
 
   @HiveField(1)
-  final String itemDesc;
+  String itemDesc;
 
   @HiveField(2)
-  final double qty;
+  double qty;
 
   @HiveField(3)
-  final double receivedQty;
+  double receivedQty;
 
   @HiveField(4)
-  final String unit;
+  String unit;
 
   @HiveField(5)
-  final int glAccountId;
+  int glAccountId;
+
+  @HiveField(6)
+  double unitPrice;
 
   GrnItemsDetails({
     required this.itemId,
@@ -29,6 +32,7 @@ class GrnItemsDetails {
     required this.receivedQty,
     required this.unit,
     required this.glAccountId,
+    required this.unitPrice,
   });
 
   factory GrnItemsDetails.fromJson(Map<String, dynamic> json) {
@@ -39,6 +43,7 @@ class GrnItemsDetails {
       receivedQty: json['receivedQty'],
       unit: json['unit'],
       glAccountId: json['glAccountId'],
+      unitPrice: json['unitPrice'],
     );
   }
 
@@ -50,6 +55,7 @@ class GrnItemsDetails {
       'receivedQty': receivedQty,
       'unit': unit,
       'glAccountId': glAccountId,
+      'unitPrice': unitPrice,
     };
   }
 }
