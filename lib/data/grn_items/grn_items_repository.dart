@@ -6,13 +6,8 @@ import 'package:mri/data/grn_items/grn_items_details.dart';
 
 class GrnItemsRepository {
   static const String _boxName = 'grnItemBox';
-  // final String baseURL = 'https://api.hexagonasia.com';
   final String baseURL = 'http://192.168.1.13:5000';
   static const Duration timeoutDuration = Duration(seconds: 10);
-
-  // Future<Box> init() async {
-  //   return await Hive.openBox<GrnItemsDetails>(_boxName);
-  // }
 
   double safeDouble(dynamic value) {
     if (value == null) return 0.0;
@@ -46,9 +41,9 @@ class GrnItemsRepository {
         final List<dynamic> items = decoded['items'] ?? [];
 
         print('🧾 Found ${items.length} item(s)');
-        await Hive.deleteBoxFromDisk(_boxName);
 
-        // Convert and validate items
+        final box = await _getBox(fresh: true);
+
         final grnItemDetails =
             items.map((item) {
               return GrnItemsDetails(
@@ -56,18 +51,17 @@ class GrnItemsRepository {
                 itemDesc: item['itemName']?.toString() ?? '',
                 qty: safeDouble(item['qty']),
                 receivedQty: safeDouble(item['receivedQty']),
+                oldReceivedQty: safeDouble(item['receivedQty']),
                 unit: item['unit']?.toString() ?? '',
                 glAccountId: 0,
                 unitPrice: safeDouble(item['unitPrice']),
+                podetaId: int.tryParse(item['id']?.toString() ?? '0') ?? 0,
+                unitId: int.tryParse(item['unitId']?.toString() ?? '0') ?? 0,
               );
             }).toList();
 
-        // Save to Hive
-        await Hive.close();
-        final grnItemDetailsBox = await Hive.openBox<GrnItemsDetails>(_boxName);
-        await grnItemDetailsBox.clear();
-        await grnItemDetailsBox.addAll(grnItemDetails);
-        await grnItemDetailsBox.close();
+        await box.clear();
+        await box.addAll(grnItemDetails);
 
         print('✅ GRN items saved to Hive');
 
@@ -89,112 +83,62 @@ class GrnItemsRepository {
     }
   }
 
-  Future<bool> addItem(
-    int itemId,
-    double qty,
-    double receivedQty,
-    String unit,
-    int glAccountId,
-    String itemDesc,
-    double unitPrice,
-  ) async {
-    await Hive.close();
-    final grnItemDetailsBox = await Hive.openBox(_boxName);
-    final grnItemDetails = GrnItemsDetails(
-      itemId: itemId,
-      qty: qty,
-      receivedQty: receivedQty,
-      unit: unit,
-      glAccountId: glAccountId,
-      itemDesc: itemDesc,
-      unitPrice: unitPrice,
-    );
-    await grnItemDetailsBox.put(itemId, grnItemDetails);
-    await grnItemDetailsBox.close();
-    await Hive.close();
+  Future<bool> addItem(GrnItemsDetails item) async {
+    final box = await _getBox();
+    await box.put(item.itemId, item);
     return true;
   }
 
-  dynamic getItem(itemId) {
-    final grnItemDetailsBox = Hive.box(_boxName);
-    return grnItemDetailsBox.get(itemId);
+  GrnItemsDetails? getItem(int itemId) {
+    final box = Hive.box<GrnItemsDetails>(_boxName);
+    return box.get(itemId);
   }
 
-  Future<bool> updateItem(
-    itemId,
-    qty,
-    receivedQty,
-    unit,
-    glAccountId,
-    itemDesc,
-    unitPrice,
-  ) async {
-    await Hive.close();
-    final grnItemDetailsBox = await Hive.openBox(_boxName);
-    final grnItemDetails = GrnItemsDetails(
-      itemId: itemId,
-      qty: qty,
-      receivedQty: receivedQty,
-      unit: unit,
-      glAccountId: glAccountId,
-      itemDesc: itemDesc,
-      unitPrice: unitPrice,
-    );
-    await grnItemDetailsBox.put(itemId, grnItemDetails);
-    await grnItemDetailsBox.close();
-    await Hive.close();
+  Future<bool> updateItem(GrnItemsDetails item) async {
+    final box = await _getBox();
+    await box.put(item.itemId, item);
     return true;
   }
 
-  Future<bool> deleteItem(itemId) async {
-    await Hive.close();
-    final grnItemDetailsBox = await Hive.openBox(_boxName);
-    await grnItemDetailsBox.delete(itemId);
-    await grnItemDetailsBox.close();
-    await Hive.close();
+  Future<bool> deleteItem(int itemId) async {
+    final box = await _getBox();
+    await box.delete(itemId);
     return true;
+  }
+
+  Future<List<GrnItemsDetails>> getAllItems() async {
+    final box = await _getBox();
+    return box.values.toList();
   }
 
   Future<bool> clearBox() async {
-    late Box<GrnItemsDetails> grnItemDetailsBox;
-
-    if (Hive.isBoxOpen(_boxName)) {
-      grnItemDetailsBox = Hive.box<GrnItemsDetails>(_boxName);
-    } else {
-      grnItemDetailsBox = await Hive.openBox<GrnItemsDetails>(_boxName);
-    }
-
-    await grnItemDetailsBox.clear();
-
-    // OPTIONAL: Only close the box if you **won't use it again immediately**
-    // await grnItemDetailsBox.close();
-
+    final box = await _getBox();
+    await box.clear();
     return true;
+  }
+
+  Future<int> getItemCount() async {
+    final box = await _getBox();
+    return box.length;
   }
 
   Future<bool> deleteBox() async {
-    await Hive.close();
-    final grnItemDetailsBox = await Hive.openBox(_boxName);
-    await grnItemDetailsBox.deleteFromDisk();
-    await Hive.close();
+    final box = await _getBox();
+    await box.deleteFromDisk();
     return true;
   }
 
-  Future<bool> deleteAllItems() async {
-    await Hive.close();
-    final grnItemDetailsBox = await Hive.openBox(_boxName);
-    await grnItemDetailsBox.clear();
-    await grnItemDetailsBox.close();
-    await Hive.close();
-    return true;
-  }
+  Future<bool> deleteAllItems() async => clearBox();
 
-  Future<bool> deleteAllBoxes() async {
-    await Hive.close();
-    final grnItemDetailsBox = await Hive.openBox(_boxName);
-    await grnItemDetailsBox.deleteFromDisk();
-    await grnItemDetailsBox.close();
-    await Hive.close();
-    return true;
+  Future<bool> deleteAllBoxes() async => deleteBox();
+
+  Future<Box<GrnItemsDetails>> _getBox({bool fresh = false}) async {
+    if (fresh && Hive.isBoxOpen(_boxName)) {
+      await Hive.box<GrnItemsDetails>(_boxName).deleteFromDisk();
+    }
+    if (!Hive.isBoxOpen(_boxName)) {
+      return await Hive.openBox<GrnItemsDetails>(_boxName);
+    }
+    return Hive.box<GrnItemsDetails>(_boxName);
   }
 }
