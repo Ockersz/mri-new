@@ -6,7 +6,8 @@ import 'package:mri/data/grn_items/grn_items_details.dart';
 
 class GrnItemsRepository {
   static const String _boxName = 'grnItemBox';
-  final String baseURL = 'http://192.168.1.13:5000';
+  final String baseURL = 'https://api.hexagonasia.com';
+  // final String baseURL = 'http://192.168.1.13:5000';
   static const Duration timeoutDuration = Duration(seconds: 10);
 
   double safeDouble(dynamic value) {
@@ -50,7 +51,7 @@ class GrnItemsRepository {
                 itemId: int.tryParse(item['itemId']?.toString() ?? '0') ?? 0,
                 itemDesc: item['itemName']?.toString() ?? '',
                 qty: safeDouble(item['qty']),
-                receivedQty: safeDouble(item['receivedQty']),
+                receivedQty: 0,
                 oldReceivedQty: safeDouble(item['receivedQty']),
                 unit: item['unit']?.toString() ?? '',
                 glAccountId: 0,

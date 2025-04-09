@@ -70,7 +70,7 @@ class GRNScreenState extends State<GRNScreen> {
 
     String dateFormat = 'dd/MM/yyyy';
     DateTime dateString = DateTime.now();
-    poNumberController.text = '16825';
+
     grnDateController.text = DateFormat(dateFormat).format(dateString);
     grnItemsRepository.clearBox();
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
@@ -80,8 +80,6 @@ class GRNScreenState extends State<GRNScreen> {
     _loadLocations();
     _loadGlAccounts();
     _loadFAItems();
-
-    supplierController.text = 'Supplier Name Supplier Name Supplier Name';
 
     setState(() {
       isSubmit = false;
@@ -302,6 +300,41 @@ class GRNScreenState extends State<GRNScreen> {
       );
       return;
     }
+    final dateFormat = DateFormat('dd/MM/yyyy'); // Matches '09/04/2025'
+    final enteredDate = dateFormat.parse(grnDateController.text);
+    // If GRN date is older than 7 days
+    if (enteredDate.isBefore(
+      DateTime.now().subtract(const Duration(days: 7)),
+    )) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const CustomAlert(
+            title: 'Sorry !',
+            message: 'GRN Date cannot be older than 7 days',
+            icon: Icons.fmd_bad_outlined,
+            iconColor: Colors.red,
+          );
+        },
+      );
+      return;
+    }
+
+    // If GRN date is in the future
+    if (enteredDate.isAfter(DateTime.now())) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const CustomAlert(
+            title: 'Sorry !',
+            message: 'GRN Date cannot be in the future',
+            icon: Icons.fmd_bad_outlined,
+            iconColor: Colors.red,
+          );
+        },
+      );
+      return;
+    }
 
     if (poNumberController.text.isEmpty) {
       showDialog(
@@ -482,16 +515,13 @@ class GRNScreenState extends State<GRNScreen> {
             );
           }).toList();
 
-      //if all grnItemDetails received qty is = to old received qty
-      if (grnItemDetails.every(
-        (item) => (item.receivedQty == item.oldReceivedQty),
-      )) {
+      if (grnItemDetails.every((item) => (item.receivedQty <= 0))) {
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return const CustomAlert(
               title: 'Sorry !',
-              message: 'No Changes to Save',
+              message: 'Nothing to Save',
               icon: Icons.fmd_bad_outlined,
               iconColor: Colors.red,
             );
@@ -499,16 +529,16 @@ class GRNScreenState extends State<GRNScreen> {
         );
         return;
       }
-
+      // Check if receivedQty is greater than oldReceivedQty - qty for all items
       if (grnItemDetails.every(
-        (item) => (item.receivedQty < item.oldReceivedQty),
+        (item) => (item.receivedQty > (item.qty - item.oldReceivedQty)),
       )) {
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return const CustomAlert(
               title: 'Sorry !',
-              message: 'Received Qty cannot be less than Old Received Qty',
+              message: 'Received Qty cannot be greater than remaining Qty',
               icon: Icons.fmd_bad_outlined,
               iconColor: Colors.red,
             );
@@ -596,6 +626,7 @@ class GRNScreenState extends State<GRNScreen> {
           supinvDateController.clear();
           remarksController.clear();
           invTypController.clear();
+          locationController.clear();
         });
       }
     } catch (error) {
@@ -1098,10 +1129,28 @@ class GRNScreenState extends State<GRNScreen> {
                                           fontSize: 16,
                                         ),
                                       ),
+                                      field3: Text(
+                                        'Rec Qty: ${item.oldReceivedQty.toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
                                     ),
                                     const SizedBox(height: 16),
                                     ResponsiveFormFields(
                                       field1: TextField(
+                                        controller: TextEditingController(
+                                          text: (item.qty - item.oldReceivedQty)
+                                              .toStringAsFixed(2),
+                                        ),
+                                        enabled: false,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Remaining Qty',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                      field2: TextField(
                                         controller: receivedQtyController,
                                         decoration: const InputDecoration(
                                           labelText: 'Received',
@@ -1133,7 +1182,7 @@ class GRNScreenState extends State<GRNScreen> {
                                         },
                                       ),
 
-                                      field2:
+                                      field3:
                                           invTypController.text == 'FA' ||
                                                   invTypController.text ==
                                                       'Service'

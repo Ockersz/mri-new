@@ -8,8 +8,8 @@ import 'package:mri/data/user/user_details.dart';
 import 'package:mri/data/user/user_repository.dart';
 
 class CommonRepository {
-  // final String baseURL = 'https://api.hexagonasia.com';
-  final String baseURL = 'http://192.168.1.13:5000';
+  final String baseURL = 'https://api.hexagonasia.com';
+  // final String baseURL = 'http://192.168.1.13:5000';
   static const Duration timeoutDuration = Duration(seconds: 10);
 
   Future checkConnection() async {

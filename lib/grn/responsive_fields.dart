@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class ResponsiveFormFields extends StatelessWidget {
   final Widget field1;
   final Widget? field2;
+  final Widget? field3;
   final double breakpoint;
   final double spacing;
   final CrossAxisAlignment columnAlignment;
@@ -12,6 +13,7 @@ class ResponsiveFormFields extends StatelessWidget {
     super.key,
     required this.field1,
     this.field2,
+    this.field3,
     this.breakpoint = 520.0,
     this.spacing = 16.0,
     this.columnAlignment = CrossAxisAlignment.stretch,
@@ -23,20 +25,33 @@ class ResponsiveFormFields extends StatelessWidget {
       builder: (context, constraints) {
         bool isWideScreen = constraints.maxWidth > breakpoint;
 
-        if (field2 == null) return field1;
+        // Collect the non-null fields
+        final fields = [
+          field1,
+          if (field2 != null) field2!,
+          if (field3 != null) field3!,
+        ];
+
+        if (fields.length == 1) return field1;
 
         if (isWideScreen) {
           return Row(
             children: [
-              Expanded(child: field1),
-              SizedBox(width: spacing),
-              Expanded(child: field2!),
+              for (int i = 0; i < fields.length; i++) ...[
+                Expanded(child: fields[i]),
+                if (i < fields.length - 1) SizedBox(width: spacing),
+              ],
             ],
           );
         } else {
           return Column(
             crossAxisAlignment: columnAlignment,
-            children: [field1, SizedBox(height: spacing), field2!],
+            children: [
+              for (int i = 0; i < fields.length; i++) ...[
+                fields[i],
+                if (i < fields.length - 1) SizedBox(height: spacing),
+              ],
+            ],
           );
         }
       },
