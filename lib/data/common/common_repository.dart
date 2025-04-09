@@ -2,12 +2,14 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:mri/data/grn_items/grn_items_repository.dart';
 import 'package:mri/data/mri_items/mri_items_repository.dart';
 import 'package:mri/data/user/user_details.dart';
 import 'package:mri/data/user/user_repository.dart';
 
 class CommonRepository {
-  final String baseURL = 'https://api.hexagonasia.com';
+  // final String baseURL = 'https://api.hexagonasia.com';
+  final String baseURL = 'http://192.168.1.13:5000';
   static const Duration timeoutDuration = Duration(seconds: 10);
 
   Future checkConnection() async {
@@ -202,6 +204,73 @@ class CommonRepository {
         return Future.error('Failed to save MRI Res');
       }
     } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  Future<String> saveGrn(
+    String poNum,
+    int poId,
+    int supplierId,
+    int currencyId,
+    int locationId,
+    String remark,
+    String supinv,
+    String supinvDate,
+    String creationDate,
+    String grnDate,
+    String invType,
+    List items,
+  ) async {
+    try {
+      print('🧑 Fetching user details...');
+      UserDetails userDetails = await UserRepository().getUserDetails();
+
+      final payload = {
+        'grndate': grnDate,
+        'ponum': poNum,
+        'poId': poId,
+        'supplierId': supplierId,
+        'currencyId': currencyId,
+        'supinv': supinv,
+        'supinvDate': supinvDate,
+        'locationId': locationId,
+        'remark': remark,
+        'invType': invType,
+        'items': items,
+        'companyId': 3,
+        'userId': userDetails.userId,
+        'creationDate': creationDate,
+      };
+
+      print('🚀 Sending POST request to $baseURL/mobile/grn/save');
+      print('📦 Payload: ${jsonEncode(payload)}');
+
+      final response = await http
+          .post(
+            Uri.parse('$baseURL/mobile/grn/save'),
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(seconds: 40));
+
+      print('✅ Response Status: ${response.statusCode}');
+      print('📨 Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('🧹 Clearing local MRI items...');
+        await GrnItemsRepository().deleteAllItems();
+
+        return response.body;
+      } else {
+        print('❌ Failed to save GRN. Status: ${response.statusCode}');
+        return Future.error('Failed to save GRN');
+      }
+    } catch (e, stack) {
+      print('❌ Exception occurred during GRN save: $e');
+      print('📉 Stack trace: $stack');
       return Future.error(e.toString());
     }
   }
