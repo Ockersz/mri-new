@@ -1,4 +1,4 @@
-import 'package:hive_flutter/adapters.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mri/data/mri_items/mri_items_details.dart';
 
 class MriItemsRepository {
@@ -6,9 +6,12 @@ class MriItemsRepository {
   final String baseURL = 'https://api.hexagonasia.com';
   static const Duration timeoutDuration = Duration(seconds: 10);
 
-  // Future<Box> init() async {
-  //   return await Hive.openBox<MriItemsDetails>(_boxName);
-  // }
+  Future<Box<MriItemsDetails>> _getBox() async {
+    if (!Hive.isBoxOpen(_boxName)) {
+      return await Hive.openBox<MriItemsDetails>(_boxName);
+    }
+    return Hive.box<MriItemsDetails>(_boxName);
+  }
 
   Future<bool> addItem(
     int itemId,
@@ -20,9 +23,8 @@ class MriItemsRepository {
     int dimensionId,
     String itemDesc,
   ) async {
-    await Hive.close();
-    final mriItemDetailsBox = await Hive.openBox(_boxName);
-    final mriItemDetails = MriItemsDetails(
+    final box = await _getBox();
+    final item = MriItemsDetails(
       itemId: itemId,
       onHandQty: onHandQty,
       glAccountId: glAccountId,
@@ -32,30 +34,28 @@ class MriItemsRepository {
       dimensionId: dimensionId,
       itemDesc: itemDesc,
     );
-    await mriItemDetailsBox.put(itemId, mriItemDetails);
-    await mriItemDetailsBox.close();
-    await Hive.close();
+    await box.put(itemId, item);
     return true;
   }
 
-  dynamic getItem(itemId) {
-    final mriItemDetailsBox = Hive.box(_boxName);
-    return mriItemDetailsBox.get(itemId);
+  MriItemsDetails? getItem(int itemId) {
+    if (!Hive.isBoxOpen(_boxName)) return null;
+    final box = Hive.box<MriItemsDetails>(_boxName);
+    return box.get(itemId);
   }
 
   Future<bool> updateItem(
-    itemId,
-    onHandQty,
-    glAccountId,
-    qty,
-    itemRemark,
-    faItemId,
-    dimensionId,
-    itemDesc,
+    int itemId,
+    double onHandQty,
+    int glAccountId,
+    double qty,
+    String itemRemark,
+    int faItemId,
+    int dimensionId,
+    String itemDesc,
   ) async {
-    await Hive.close();
-    final mriItemDetailsBox = await Hive.openBox(_boxName);
-    final mriItemDetails = MriItemsDetails(
+    final box = await _getBox();
+    final item = MriItemsDetails(
       itemId: itemId,
       onHandQty: onHandQty,
       glAccountId: glAccountId,
@@ -65,36 +65,29 @@ class MriItemsRepository {
       dimensionId: dimensionId,
       itemDesc: itemDesc,
     );
-    mriItemDetailsBox.put(itemId, mriItemDetails);
-    await Hive.close();
+    await box.put(itemId, item);
     return true;
   }
 
-  Future<bool> deleteItem(itemId) async {
-    await Hive.close();
-    final mriItemDetailsBox = await Hive.openBox(_boxName);
-    mriItemDetailsBox.delete(itemId);
-    await Hive.close();
+  Future<bool> deleteItem(int itemId) async {
+    final box = await _getBox();
+    await box.delete(itemId);
     return true;
   }
 
   Future<List<MriItemsDetails>> getAllItems() async {
-    List<MriItemsDetails> mriItemsList = [];
-    await Hive.close();
-    final mriItemDetailsBox = await Hive.openBox(_boxName);
-    for (var i = 0; i < mriItemDetailsBox.length; i++) {
-      mriItemsList.add(mriItemDetailsBox.getAt(i));
-    }
-    await Hive.close();
-    return mriItemsList;
+    final box = await _getBox();
+    return box.values.toList();
   }
 
   Future<void> clearAllItems() async {
-    final mriItemDetailsBox = await Hive.openBox(_boxName);
-    mriItemDetailsBox.clear();
+    final box = await _getBox();
+    await box.clear();
   }
 
-  void closeBox() {
-    Hive.close();
+  Future<void> closeBox() async {
+    if (Hive.isBoxOpen(_boxName)) {
+      await Hive.box(_boxName).close();
+    }
   }
 }

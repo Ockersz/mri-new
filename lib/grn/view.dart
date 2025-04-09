@@ -14,6 +14,7 @@ import 'package:mri/data/grn_items/grn_items_details.dart';
 import 'package:mri/data/grn_items/grn_items_repository.dart';
 import 'package:mri/data/user/user_repository.dart';
 import 'package:mri/grn/responsive_fields.dart';
+import 'package:search_choices/search_choices.dart';
 
 class GRNScreen extends StatefulWidget {
   const GRNScreen({Key? key}) : super(key: key);
@@ -282,6 +283,338 @@ class GRNScreenState extends State<GRNScreen> {
         isSubmit = false;
       });
       Navigator.of(context, rootNavigator: true).pop(); // Close loading dialog
+    }
+  }
+
+  Future<void> saveChanges() async {
+    bool connection = _connectionStatus.contains(ConnectivityResult.none);
+    if (connection) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const CustomAlert(
+            title: 'Sorry !',
+            message: 'No Internet Connection',
+            icon: Icons.fmd_bad_outlined,
+            iconColor: Colors.red,
+          );
+        },
+      );
+      return;
+    }
+
+    if (poNumberController.text.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const CustomAlert(
+            title: 'Sorry !',
+            message: 'Please Enter PO Number',
+            icon: Icons.fmd_bad_outlined,
+            iconColor: Colors.red,
+          );
+        },
+      );
+      return;
+    }
+
+    if (supplierIdController.text.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const CustomAlert(
+            title: 'Sorry !',
+            message: 'Supplier not found',
+            icon: Icons.fmd_bad_outlined,
+            iconColor: Colors.red,
+          );
+        },
+      );
+      return;
+    }
+
+    if (grnDateController.text.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const CustomAlert(
+            title: 'Sorry !',
+            message: 'Please Select GRN Date',
+            icon: Icons.fmd_bad_outlined,
+            iconColor: Colors.red,
+          );
+        },
+      );
+      return;
+    }
+
+    if (locationController.text.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const CustomAlert(
+            title: 'Sorry !',
+            message: 'Please Select Location',
+            icon: Icons.fmd_bad_outlined,
+            iconColor: Colors.red,
+          );
+        },
+      );
+      return;
+    }
+
+    if (supinvController.text.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const CustomAlert(
+            title: 'Sorry !',
+            message: 'Please Enter Supplier Invoice Number',
+            icon: Icons.fmd_bad_outlined,
+            iconColor: Colors.red,
+          );
+        },
+      );
+      return;
+    }
+
+    if (supinvDateController.text.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const CustomAlert(
+            title: 'Sorry !',
+            message: 'Please Select Supplier Invoice Date',
+            icon: Icons.fmd_bad_outlined,
+            iconColor: Colors.red,
+          );
+        },
+      );
+      return;
+    }
+
+    if (invTypController.text.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const CustomAlert(
+            title: 'Sorry !',
+            message: 'Please Select Inventory Type',
+            icon: Icons.fmd_bad_outlined,
+            iconColor: Colors.red,
+          );
+        },
+      );
+      return;
+    }
+
+    if (await grnItemsRepository.getItemCount() == 0) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const CustomAlert(
+            title: 'Sorry !',
+            message: 'Please Add Items to GRN',
+            icon: Icons.fmd_bad_outlined,
+            iconColor: Colors.red,
+          );
+        },
+      );
+      return;
+    }
+
+    //check if all grn items have received qty less than qty
+    final grnItems = await grnItemsRepository.getAllItems();
+    for (var item in grnItems) {
+      if (item.receivedQty > item.qty) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return const CustomAlert(
+              title: 'Sorry !',
+              message: 'Received Qty cannot be greater than Qty',
+              icon: Icons.fmd_bad_outlined,
+              iconColor: Colors.red,
+            );
+          },
+        );
+        return;
+      }
+
+      if ((invTypController.text == 'FA' ||
+              invTypController.text == 'Service') &&
+          item.glAccountId == 0) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return const CustomAlert(
+              title: 'Sorry !',
+              message: 'Please Select GL Account for FA Items',
+              icon: Icons.fmd_bad_outlined,
+              iconColor: Colors.red,
+            );
+          },
+        );
+        return;
+      }
+    }
+
+    try {
+      setState(() {
+        isSubmit = true;
+      });
+
+      final grnItems = await grnItemsRepository.getAllItems();
+
+      List<GrnItemsDetails> grnItemDetails =
+          grnItems.map((item) {
+            return GrnItemsDetails(
+              itemId: item.itemId,
+              itemDesc: item.itemDesc,
+              qty: item.qty,
+              receivedQty: item.receivedQty,
+              oldReceivedQty: item.oldReceivedQty,
+              unit: item.unit,
+              glAccountId: item.glAccountId,
+              unitPrice: item.unitPrice,
+              podetaId: item.podetaId,
+              unitId: item.unitId,
+            );
+          }).toList();
+
+      //if all grnItemDetails received qty is = to old received qty
+      if (grnItemDetails.every(
+        (item) => (item.receivedQty == item.oldReceivedQty),
+      )) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return const CustomAlert(
+              title: 'Sorry !',
+              message: 'No Changes to Save',
+              icon: Icons.fmd_bad_outlined,
+              iconColor: Colors.red,
+            );
+          },
+        );
+        return;
+      }
+
+      if (grnItemDetails.every(
+        (item) => (item.receivedQty < item.oldReceivedQty),
+      )) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return const CustomAlert(
+              title: 'Sorry !',
+              message: 'Received Qty cannot be less than Old Received Qty',
+              icon: Icons.fmd_bad_outlined,
+              iconColor: Colors.red,
+            );
+          },
+        );
+        return;
+      }
+
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false, // Prevent closing by tapping outside
+        builder: (BuildContext context) {
+          return const Dialog(
+            backgroundColor: Colors.transparent,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        },
+      );
+
+      String dateFormat = 'yyyy-MM-dd';
+      DateTime DateString = DateFormat(
+        'dd/MM/yyyy',
+      ).parse(grnDateController.text);
+      String grnDate = DateFormat(dateFormat).format(DateString);
+      DateTime supinvDateString = DateFormat(
+        'dd/MM/yyyy',
+      ).parse(supinvDateController.text);
+      String supinvDate = DateFormat(dateFormat).format(supinvDateString);
+      int supplierId = int.parse(supplierIdController.text);
+      int poId = int.parse(poIdController.text);
+      int currencyId = int.parse(currencyIdController.text);
+      int locationId = int.parse(locationController.text ?? '0');
+      String invType = invTypController.text;
+      String supinv = supinvController.text;
+      String remarks = remarksController.text;
+      String creationDate = DateFormat(
+        'yyyy-MM-dd HH:mm:ss',
+      ).format(DateTime.now());
+
+      String saved = await commonRepository.saveGrn(
+        poNumberController.text,
+        poId,
+        supplierId,
+        currencyId,
+        locationId,
+        remarks,
+        supinv,
+        supinvDate,
+        creationDate,
+        grnDate,
+        invType,
+        grnItemDetails,
+      );
+
+      Navigator.of(context, rootNavigator: true).pop();
+      if (saved.isNotEmpty) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return CustomAlert(
+              title: 'MRI Saved Successfully',
+              message: 'MRI$saved',
+              icon: Icons.done,
+              iconColor: Colors.green,
+              titleColor: Colors.black,
+              messageColor: Colors.black54,
+              backgroundColor: Colors.white,
+            );
+          },
+        );
+        //clear fields
+        setState(() {
+          final String dateFormat = 'dd/MM/yyyy';
+          DateTime dateString = DateTime.now();
+          grnDateController.text = DateFormat(dateFormat).format(dateString);
+
+          poNumberController.clear();
+          supplierController.clear();
+          poIdController.clear();
+          supplierIdController.clear();
+          currencyIdController.clear();
+          currencyNameController.clear();
+          supinvController.clear();
+          supinvDateController.clear();
+          remarksController.clear();
+          invTypController.clear();
+        });
+      }
+    } catch (error) {
+      Navigator.of(context, rootNavigator: true).pop();
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const CustomAlert(
+            title: 'Sorry !',
+            message: 'Failed to Save GRN',
+            icon: Icons.fmd_bad_outlined,
+            iconColor: Colors.red,
+          );
+        },
+      );
+    } finally {
+      setState(() {
+        isSubmit = false;
+      });
     }
   }
 
@@ -617,6 +950,12 @@ class GRNScreenState extends State<GRNScreen> {
                                 ? null
                                 : () {
                                   grnItemsRepository.clearBox();
+                                  String dateFormat = 'dd/MM/yyyy';
+                                  DateTime dateString = DateTime.now();
+                                  grnDateController.text = DateFormat(
+                                    dateFormat,
+                                  ).format(dateString);
+
                                   setState(() {
                                     poNumberController.clear();
                                     supplierController.clear();
@@ -624,11 +963,11 @@ class GRNScreenState extends State<GRNScreen> {
                                     supplierIdController.clear();
                                     currencyIdController.clear();
                                     currencyNameController.clear();
-                                    grnDateController.clear();
                                     supinvController.clear();
                                     supinvDateController.clear();
                                     remarksController.clear();
                                     invTypController.clear();
+                                    locationController.clear();
                                   });
                                 },
                         style: ElevatedButton.styleFrom(
@@ -658,9 +997,8 @@ class GRNScreenState extends State<GRNScreen> {
                             isSubmit == true
                                 ? null
                                 : () {
-                                  searchPoNumber(poNumberController.text);
+                                  saveChanges();
                                 },
-                        child: const Text('Submit'),
                         style: ElevatedButton.styleFrom(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5.0),
@@ -668,6 +1006,7 @@ class GRNScreenState extends State<GRNScreen> {
                           backgroundColor: Colors.white,
                           side: const BorderSide(color: Colors.grey),
                         ),
+                        child: const Text('Submit'),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -798,78 +1137,106 @@ class GRNScreenState extends State<GRNScreen> {
                                           invTypController.text == 'FA' ||
                                                   invTypController.text ==
                                                       'Service'
-                                              ? Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                              ? Row(
                                                 children: [
-                                                  Row(
-                                                    children: [
-                                                      Expanded(
-                                                        child: DropdownButtonFormField<
-                                                          String
-                                                        >(
-                                                          value:
-                                                              selectedGlAccount,
-                                                          isExpanded: true,
-                                                          decoration:
-                                                              const InputDecoration(
-                                                                labelText:
-                                                                    'GL Account',
-                                                                border:
-                                                                    OutlineInputBorder(),
+                                                  Expanded(
+                                                    child: SearchChoices.single(
+                                                      items:
+                                                          glAccounts.entries.map((
+                                                            entry,
+                                                          ) {
+                                                            return DropdownMenuItem<
+                                                              String
+                                                            >(
+                                                              value:
+                                                                  entry.key
+                                                                      .toString(),
+                                                              child: Text(
+                                                                '${entry.key} - ${entry.value}',
                                                               ),
-                                                          items:
-                                                              glAccounts.entries
-                                                                  .map(
-                                                                    (
-                                                                      entry,
-                                                                    ) => DropdownMenuItem<
-                                                                      String
-                                                                    >(
-                                                                      value:
-                                                                          entry
-                                                                              .key
-                                                                              .toString(),
-                                                                      child: Text(
-                                                                        '${entry.key} - ${entry.value}',
-                                                                      ),
-                                                                    ),
-                                                                  )
-                                                                  .toList(),
-                                                          onChanged: (value) {
-                                                            if (value != null) {
-                                                              item.glAccountId =
-                                                                  int.tryParse(
-                                                                    value,
-                                                                  ) ??
-                                                                  0;
-                                                              box.putAt(
-                                                                index,
-                                                                item,
-                                                              );
-                                                            }
-                                                          },
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 8),
-                                                      IconButton(
-                                                        icon: const Icon(
-                                                          Icons.clear,
-                                                        ),
-                                                        onPressed: () {
+                                                            );
+                                                          }).toList(),
+                                                      value:
+                                                          (item.glAccountId !=
+                                                                      0 &&
+                                                                  glAccounts
+                                                                      .containsKey(
+                                                                        item.glAccountId,
+                                                                      ))
+                                                              ? item.glAccountId
+                                                                  .toString()
+                                                              : null,
+                                                      hint: "Select GL Account",
+                                                      searchHint:
+                                                          "Search GL Account",
+                                                      onChanged: (value) {
+                                                        if (value != null) {
                                                           setState(() {
                                                             item.glAccountId =
+                                                                int.tryParse(
+                                                                  value,
+                                                                ) ??
                                                                 0;
-                                                            selectedGlAccount =
-                                                                null;
                                                             box.putAt(
                                                               index,
                                                               item,
                                                             );
                                                           });
-                                                        },
+                                                        }
+                                                      },
+                                                      dialogBox: true,
+                                                      isExpanded: true,
+                                                      menuBackgroundColor:
+                                                          Colors.white,
+                                                      style: const TextStyle(
+                                                        fontSize: 16,
+                                                        color: Colors.black,
                                                       ),
-                                                    ],
+                                                      searchFn: (
+                                                        String keyword,
+                                                        items,
+                                                      ) {
+                                                        List<int> ret = [];
+                                                        if (keyword
+                                                            .isNotEmpty) {
+                                                          keyword =
+                                                              keyword
+                                                                  .toLowerCase();
+                                                          for (
+                                                            int i = 0;
+                                                            i < items.length;
+                                                            i++
+                                                          ) {
+                                                            if (items[i].child
+                                                                .toString()
+                                                                .toLowerCase()
+                                                                .contains(
+                                                                  keyword,
+                                                                )) {
+                                                              ret.add(i);
+                                                            }
+                                                          }
+                                                        } else {
+                                                          items.asMap().forEach(
+                                                            (i, item) {
+                                                              ret.add(i);
+                                                            },
+                                                          );
+                                                        }
+                                                        return ret;
+                                                      },
+                                                      searchInputDecoration:
+                                                          const InputDecoration(
+                                                            border:
+                                                                OutlineInputBorder(),
+                                                          ),
+                                                      disabledHint: const Text(
+                                                        "Disabled",
+                                                        style: TextStyle(
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
+                                                    ),
                                                   ),
                                                 ],
                                               )
